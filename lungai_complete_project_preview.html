@@ -1,0 +1,630 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .preview-root { width: 100%; background: var(--color-background-tertiary); }
+
+  .top-nav {
+    display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+    background: var(--color-background-primary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    overflow-x: auto; flex-wrap: wrap;
+  }
+  .page-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary); cursor: pointer; white-space: nowrap;
+    font-family: var(--font-sans);
+  }
+  .page-btn.active {
+    background: #0A84FF; color: #fff; border-color: #0A84FF;
+  }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+  .badge-red { background: #FFF0EF; color: #C0392B; }
+  .badge-green { background: #E9FAF0; color: #1A7A3C; }
+  .badge-blue { background: #E8F3FF; color: #0055B3; }
+  .badge-amber { background: #FFF8E0; color: #9A7200; }
+  .badge-gray { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .sidebar {
+    width: 210px; background: #0D1117; position: absolute; top: 0; left: 0; bottom: 0;
+    display: flex; flex-direction: column; z-index: 10;
+  }
+  .sidebar-logo { padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px; }
+  .logo-icon { width: 30px; height: 30px; background: #0A84FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-text { font-size: 14px; font-weight: 600; color: #fff; }
+  .logo-sub { font-size: 9px; color: #4A5168; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+  .nav-section { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #4A5168; padding: 10px 14px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 5px; color: #C5CAD6; font-size: 12px; cursor: pointer; margin: 1px 6px; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-item.active { background: rgba(10,132,255,0.18); color: #0A84FF; }
+  .nav-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .sidebar-footer { margin-top: auto; padding: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .user-row { display: flex; align-items: center; gap: 8px; padding: 8px; }
+  .user-ava { width: 28px; height: 28px; border-radius: 50%; background: #0A84FF; color: #fff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .user-nm { font-size: 12px; color: #fff; }
+  .user-rl { font-size: 10px; color: #4A5168; }
+
+  .app-layout { display: flex; position: relative; height: 560px; overflow: hidden; background: #F0F2F5; }
+  .main-area { margin-left: 210px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: #fff; border-bottom: 0.5px solid #E4E7EC; padding: 0 20px; height: 50px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: #0D1117; }
+  .page-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+  .card { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: #0D1117; margin-bottom: 12px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border: 1px solid #E4E7EC; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .stat-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .stat-icon svg { width: 18px; height: 18px; }
+  .si-blue { background: #E8F3FF; color: #0A84FF; }
+  .si-green { background: #E9FAF0; color: #30D158; }
+  .si-red { background: #FFF0EF; color: #FF453A; }
+  .si-amber { background: #FFF8E0; color: #CC9A00; }
+  .stat-label { font-size: 10px; color: #9BA3B5; font-weight: 500; }
+  .stat-value { font-size: 20px; font-weight: 600; color: #0D1117; }
+  .stat-change { font-size: 10px; color: #30D158; }
+
+  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .activity-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #F0F2F5; }
+  .activity-row:last-child { border-bottom: none; }
+  .act-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .act-icon svg { width: 12px; height: 12px; }
+
+  .disease-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .disease-name { font-size: 11px; width: 90px; flex-shrink: 0; color: #0D1117; }
+  .disease-track { flex: 1; height: 6px; background: #E4E7EC; border-radius: 100px; overflow: hidden; }
+  .disease-fill { height: 100%; border-radius: 100px; }
+
+  .chart-bars { display: flex; align-items: flex-end; gap: 5px; height: 70px; }
+  .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .chart-bar { width: 100%; border-radius: 3px 3px 0 0; background: #0A84FF; opacity: 0.7; }
+  .chart-lbl { font-size: 9px; color: #9BA3B5; }
+
+  .status-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid #F0F2F5; font-size: 11px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font-sans); white-space: nowrap; }
+  .btn svg { width: 12px; height: 12px; }
+  .btn-primary { background: #0A84FF; color: #fff; }
+  .btn-outline { background: transparent; border: 0.5px solid #C9CDD6; color: #0D1117; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+  /* AUTH */
+  .auth-split { display: flex; height: 560px; }
+  .auth-left { width: 380px; background: #fff; padding: 40px 36px; display: flex; flex-direction: column; justify-content: center; }
+  .auth-right { flex: 1; background: #0D1117; display: flex; align-items: center; justify-content: center; padding: 32px; position: relative; overflow: hidden; }
+  .auth-right-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(10,132,255,0.15) 0%, transparent 60%); }
+  .auth-right-content { position: relative; z-index: 1; text-align: center; color: #fff; }
+  .auth-heading { font-size: 22px; font-weight: 600; color: #0D1117; margin-bottom: 4px; }
+  .auth-sub { font-size: 13px; color: #5A6072; margin-bottom: 24px; }
+  .form-lbl { font-size: 11px; font-weight: 500; color: #5A6072; margin-bottom: 4px; display: block; }
+  .form-inp { width: 100%; padding: 8px 12px; border: 1px solid #E4E7EC; border-radius: 8px; font-size: 13px; font-family: var(--font-sans); background: #fff; color: #0D1117; outline: none; margin-bottom: 12px; }
+  .form-inp:focus { border-color: #0A84FF; }
+  .form-sel { width: 100%; padding: 8px 12px; border: 1px solid #E4E7EC; border-radius: 8px; font-size: 13px; font-family: var(--font-sans); background: #fff; color: #0D1117; outline: none; margin-bottom: 12px; appearance: none; }
+
+  .feature-list { list-style: none; text-align: left; margin: 20px auto 0; }
+  .feature-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; color: rgba(255,255,255,0.7); font-size: 12px; }
+  .feat-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #0A84FF; background: rgba(10,132,255,0.2); flex-shrink: 0; }
+
+  .step-nav { display: flex; align-items: center; gap: 0; margin-bottom: 16px; }
+  .step-item { display: flex; align-items: center; flex: 1; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; background: #E4E7EC; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #9BA3B5; flex-shrink: 0; }
+  .step-num.done { background: #30D158; color: #fff; }
+  .step-num.active { background: #0A84FF; color: #fff; }
+  .step-line { flex: 1; height: 2px; background: #E4E7EC; }
+  .step-line.done { background: #30D158; }
+  .step-info { margin-left: 6px; }
+  .step-title { font-size: 11px; font-weight: 500; color: #9BA3B5; }
+  .step-title.active { color: #0A84FF; }
+  .step-title.done { color: #30D158; }
+
+  .xray-box { background: #000; border-radius: 10px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+  .xray-box svg { width: 80%; height: 80%; opacity: 0.7; }
+  .scan-line { position: absolute; top: 20%; left: 0; right: 0; height: 2px; background: #0A84FF; box-shadow: 0 0 6px #0A84FF; animation: scan 2.5s ease-in-out infinite; }
+  @keyframes scan { 0%{top:10%} 100%{top:90%} }
+  .heatmap-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(255,165,0,0.85); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; }
+
+  .conf-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .conf-track { flex: 1; height: 6px; background: #E4E7EC; border-radius: 100px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 100px; }
+  .conf-red { background: #FF453A; }
+  .conf-amber { background: #FF9F0A; }
+  .conf-green { background: #30D158; }
+
+  .result-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; margin-bottom: 12px; }
+  .result-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .result-icon svg { width: 20px; height: 20px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { text-align: left; padding: 7px 10px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #9BA3B5; border-bottom: 1px solid #E4E7EC; background: #F7F8FA; }
+  tbody td { padding: 9px 10px; border-bottom: 0.5px solid #F0F2F5; vertical-align: middle; }
+  tbody tr:hover { background: #F7F8FA; }
+
+  .search-bar { display: flex; align-items: center; gap: 8px; background: #F7F8FA; border: 1px solid #E4E7EC; border-radius: 8px; padding: 0 10px; }
+  .search-bar input { border: none; background: none; padding: 7px 0; font-size: 12px; outline: none; color: #0D1117; flex: 1; font-family: var(--font-sans); }
+  .search-bar svg { width: 13px; height: 13px; color: #9BA3B5; }
+
+  .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
+  .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #C9CDD6; border-radius: 20px; transition: 0.3s; }
+  .toggle-slider:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+  input:checked + .toggle-slider { background: #0A84FF; }
+  input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+  .tab-nav-inner { display: flex; gap: 3px; border-bottom: 1px solid #E4E7EC; margin-bottom: 16px; }
+  .tab-btn-inner { padding: 7px 14px; font-size: 12px; font-family: var(--font-sans); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: #5A6072; }
+  .tab-btn-inner.active { border-bottom-color: #0A84FF; color: #0A84FF; font-weight: 500; }
+
+  .patient-ava { width: 28px; height: 28px; border-radius: 50%; background: #E8F3FF; color: #0A84FF; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .model-bar { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #E4E7EC; border-radius: 8px; margin-bottom: 8px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #F0F2F5; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-lbl { font-size: 12px; font-weight: 500; color: #0D1117; }
+  .setting-desc { font-size: 10px; color: #9BA3B5; margin-top: 1px; }
+</style>
+
+<div class="preview-root">
+  <div class="top-nav">
+    <span style="font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-right: 6px;">Pages:</span>
+    <button class="page-btn active" onclick="showPage('login', this)">Login</button>
+    <button class="page-btn" onclick="showPage('register', this)">Register</button>
+    <button class="page-btn" onclick="showPage('dashboard', this)">Dashboard</button>
+    <button class="page-btn" onclick="showPage('upload', this)">Upload & Scan</button>
+    <button class="page-btn" onclick="showPage('results', this)">AI Results</button>
+    <button class="page-btn" onclick="showPage('history', this)">Patient History</button>
+    <button class="page-btn" onclick="showPage('admin', this)">Admin Panel</button>
+  </div>
+
+  <!-- ════ LOGIN ════ -->
+  <div class="screen active" id="screen-login">
+    <div class="auth-split">
+      <div class="auth-left">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:28px;">
+          <div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div>
+          <span style="font-size:16px;font-weight:700;color:#0D1117;">LungAI</span>
+        </div>
+        <div class="auth-heading">Welcome back</div>
+        <div class="auth-sub">Sign in to access the AI detection system</div>
+        <label class="form-lbl">Email address</label>
+        <input class="form-inp" type="email" value="doctor@hospital.com" />
+        <label class="form-lbl">Password</label>
+        <input class="form-inp" type="password" value="••••••••••" />
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:12px;">
+          <label style="display:flex;align-items:center;gap:6px;color:#5A6072;"><input type="checkbox" checked /> Remember me</label>
+          <a href="#" style="color:#0A84FF;">Forgot password?</a>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])">Sign In</button>
+        <div style="margin-top:16px;text-align:center;font-size:12px;color:#5A6072;">Don't have an account? <a href="#" style="color:#0A84FF;" onclick="showPage('register', document.querySelectorAll('.page-btn')[1])">Create account</a></div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-right-bg"></div>
+        <div class="auth-right-content">
+          <svg viewBox="0 0 160 160" style="width:120px;height:120px;margin:0 auto 20px;">
+            <path d="M75 35 L75 125" stroke="rgba(10,132,255,0.4)" stroke-width="2"/>
+            <path d="M75 48 C65 46 55 50 52 60 C49 70 53 84 64 87" fill="none" stroke="#0A84FF" stroke-width="2" opacity="0.7"/>
+            <path d="M75 48 C85 46 95 50 98 60 C101 70 97 84 86 87" fill="none" stroke="#0A84FF" stroke-width="2" opacity="0.7"/>
+            <path d="M75 62 C62 60 50 66 46 78 C43 90 48 106 62 109" fill="none" stroke="#0A84FF" stroke-width="1.5" opacity="0.5"/>
+            <path d="M75 62 C88 60 100 66 104 78 C107 90 102 106 88 109" fill="none" stroke="#0A84FF" stroke-width="1.5" opacity="0.5"/>
+            <circle cx="58" cy="80" r="5" fill="#0A84FF" opacity="0.5"><animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" repeatCount="indefinite"/></circle>
+            <circle cx="92" cy="80" r="5" fill="#0A84FF" opacity="0.5"><animate attributeName="r" values="5;9;5" dur="2s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" begin="0.5s" repeatCount="indefinite"/></circle>
+            <circle cx="75" cy="75" r="6" fill="#64D2FF" opacity="0.8"><animate attributeName="r" values="6;11;6" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0.2;0.8" dur="2.5s" repeatCount="indefinite"/></circle>
+          </svg>
+          <div style="font-size:22px;font-weight:700;margin-bottom:10px;line-height:1.2;">AI-Powered<br/>Lung Disease Detection</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);max-width:280px;margin:0 auto 20px;">Multi-model analysis of chest X-rays for pneumonia, TB, COVID-19, lung cancer and more.</div>
+          <ul class="feature-list">
+            <li><div class="feat-dot"></div>8 diseases detected simultaneously</li>
+            <li><div class="feat-dot"></div>95.4% ensemble accuracy</li>
+            <li><div class="feat-dot"></div>Instant GradCAM heatmaps</li>
+            <li><div class="feat-dot"></div>HIPAA-compliant storage</li>
+          </ul>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap;">
+            <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.8);"><strong>8</strong> diseases</div>
+            <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.8);"><strong>95.4%</strong> accuracy</div>
+            <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,0.8);"><strong>&lt;3s</strong> analysis</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ REGISTER ════ -->
+  <div class="screen" id="screen-register">
+    <div class="auth-split">
+      <div class="auth-left" style="overflow-y:auto;justify-content:flex-start;padding-top:28px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px;">
+          <div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div>
+          <span style="font-size:16px;font-weight:700;color:#0D1117;">LungAI</span>
+        </div>
+        <div class="auth-heading">Create account</div>
+        <div class="auth-sub">Join the AI-powered diagnostic platform</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="form-lbl">First name</label><input class="form-inp" value="John" /></div>
+          <div><label class="form-lbl">Last name</label><input class="form-inp" value="Smith" /></div>
+        </div>
+        <label class="form-lbl">Email address</label>
+        <input class="form-inp" type="email" value="john@hospital.com" />
+        <label class="form-lbl">Role</label>
+        <select class="form-sel"><option>Doctor / Physician</option><option>Radiologist</option><option>Nurse</option></select>
+        <label class="form-lbl">Medical License Number</label>
+        <input class="form-inp" value="MDL-2024-00123" />
+        <label class="form-lbl">Hospital / Institution</label>
+        <input class="form-inp" value="Muhimbili National Hospital" />
+        <label class="form-lbl">Password</label>
+        <input class="form-inp" type="password" value="••••••••••" />
+        <div style="display:flex;gap:4px;margin-bottom:4px;">
+          <div style="flex:1;height:4px;border-radius:2px;background:#30D158;"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:#30D158;"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:#30D158;"></div>
+          <div style="flex:1;height:4px;border-radius:2px;background:#E4E7EC;"></div>
+        </div>
+        <div style="font-size:10px;color:#30D158;margin-bottom:10px;">Good password</div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;" onclick="showPage('login', document.querySelectorAll('.page-btn')[0])">Create Account</button>
+        <div style="margin-top:12px;text-align:center;font-size:12px;color:#5A6072;">Already have an account? <a href="#" style="color:#0A84FF;" onclick="showPage('login', document.querySelectorAll('.page-btn')[0])">Sign in</a></div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-right-bg"></div>
+        <div class="auth-right-content">
+          <svg viewBox="0 0 160 160" style="width:110px;height:110px;margin:0 auto 18px;">
+            <rect x="20" y="20" width="120" height="120" rx="10" fill="none" stroke="rgba(10,132,255,0.3)" stroke-width="1.5"/>
+            <path d="M80 42 L80 118" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+            <path d="M80 52 C69 50 59 54 56 64 C53 73 57 84 68 87" fill="none" stroke="#0A84FF" stroke-width="1.5" opacity="0.6"/>
+            <path d="M80 52 C91 50 101 54 104 64 C107 73 103 84 92 87" fill="none" stroke="#0A84FF" stroke-width="1.5" opacity="0.6"/>
+            <rect x="47" y="65" width="22" height="22" rx="3" fill="none" stroke="#FFD60A" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.8"/>
+            <rect x="91" y="70" width="20" height="20" rx="3" fill="none" stroke="#30D158" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.8"/>
+            <line x1="30" y1="80" x2="130" y2="80" stroke="#0A84FF" stroke-width="1.5" opacity="0.5"><animate attributeName="y1" values="35;125;35" dur="2.5s" repeatCount="indefinite"/><animate attributeName="y2" values="35;125;35" dur="2.5s" repeatCount="indefinite"/></line>
+          </svg>
+          <div style="font-size:18px;font-weight:700;margin-bottom:10px;">Join 2,000+<br/>Medical Professionals</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);max-width:260px;margin:0 auto 16px;">Access AI-powered chest X-ray analysis trusted by radiologists across 50+ hospitals.</div>
+          <ul class="feature-list">
+            <li><div class="feat-dot"></div>Detect 8+ lung conditions</li>
+            <li><div class="feat-dot"></div>Explainable AI with heatmaps</li>
+            <li><div class="feat-dot"></div>Patient history & reports</li>
+            <li><div class="feat-dot"></div>HIPAA-compliant secure storage</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DASHBOARD ════ -->
+  <div class="screen" id="screen-dashboard">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div><div class="logo-text">LungAI<span class="logo-sub">Detection System</span></div></div>
+        <div style="padding:8px 6px;flex:1;">
+          <div class="nav-section">Main</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+          <div class="nav-item" onclick="showPage('upload', document.querySelectorAll('.page-btn')[3])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>New Scan</div>
+          <div class="nav-item" onclick="showPage('results', document.querySelectorAll('.page-btn')[4])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Results</div>
+          <div class="nav-item" onclick="showPage('history', document.querySelectorAll('.page-btn')[5])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Patient History</div>
+          <div class="nav-section" style="margin-top:8px;">Administration</div>
+          <div class="nav-item" onclick="showPage('admin', document.querySelectorAll('.page-btn')[6])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Admin Panel</div>
+        </div>
+        <div class="sidebar-footer"><div class="user-row"><div class="user-ava">SA</div><div><div class="user-nm">Dr. Sarah Ahmed</div><div class="user-rl">Radiologist</div></div></div></div>
+      </div>
+      <div class="main-area">
+        <div class="topbar"><div class="topbar-title">Dashboard</div><div style="display:flex;gap:8px;"><button class="btn btn-primary btn-sm" onclick="showPage('upload', document.querySelectorAll('.page-btn')[3])">+ New Scan</button></div></div>
+        <div class="page-body">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon si-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="stat-label">Total Patients</div><div class="stat-value">248</div><div class="stat-change">+12 this week</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div><div class="stat-label">Scans Completed</div><div class="stat-value">1,083</div><div class="stat-change">+47 this week</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div><div><div class="stat-label">Positive Findings</div><div class="stat-value">187</div><div class="stat-change" style="color:#FF453A;">17.3% rate</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="stat-label">Model Accuracy</div><div class="stat-value">95.4%</div><div class="stat-change">+0.3% this month</div></div></div>
+          </div>
+          <div class="two-col">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div class="card-title" style="margin-bottom:0;">Recent Scans</div><button class="btn btn-outline btn-sm">View all</button></div>
+              <div class="activity-row"><div class="act-icon si-red" style="border-radius:50%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">John Mwangi</div><div style="font-size:10px;color:#9BA3B5;">PT-2048 · Pneumonia · 87%</div></div><span class="badge badge-red">Finding</span><div style="font-size:10px;color:#9BA3B5;margin-left:6px;">2m ago</div></div>
+              <div class="activity-row"><div class="act-icon si-green" style="border-radius:50%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Amina Hassan</div><div style="font-size:10px;color:#9BA3B5;">PT-2047 · Normal · 96%</div></div><span class="badge badge-green">Normal</span><div style="font-size:10px;color:#9BA3B5;margin-left:6px;">18m ago</div></div>
+              <div class="activity-row"><div class="act-icon si-red" style="border-radius:50%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">David Ochieng</div><div style="font-size:10px;color:#9BA3B5;">PT-2046 · Tuberculosis · 74%</div></div><span class="badge badge-red">Finding</span><div style="font-size:10px;color:#9BA3B5;margin-left:6px;">1hr ago</div></div>
+              <div class="activity-row"><div class="act-icon si-green" style="border-radius:50%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Samuel Kipchoge</div><div style="font-size:10px;color:#9BA3B5;">PT-2044 · Normal · 94%</div></div><span class="badge badge-green">Normal</span><div style="font-size:10px;color:#9BA3B5;margin-left:6px;">3hr ago</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Disease Detections</div>
+              <div class="disease-bar"><div class="disease-name">Pneumonia</div><div class="disease-track"><div class="disease-fill" style="width:100%;background:#FF453A;"></div></div><div style="font-size:10px;font-weight:600;min-width:20px;">84</div></div>
+              <div class="disease-bar"><div class="disease-name">Tuberculosis</div><div class="disease-track"><div class="disease-fill" style="width:50%;background:#FF9F0A;"></div></div><div style="font-size:10px;font-weight:600;min-width:20px;">42</div></div>
+              <div class="disease-bar"><div class="disease-name">COVID-19</div><div class="disease-track"><div class="disease-fill" style="width:37%;background:#0A84FF;"></div></div><div style="font-size:10px;font-weight:600;min-width:20px;">31</div></div>
+              <div class="disease-bar"><div class="disease-name">Effusion</div><div class="disease-track"><div class="disease-fill" style="width:21%;background:#5E5CE6;"></div></div><div style="font-size:10px;font-weight:600;min-width:20px;">18</div></div>
+              <div class="disease-bar"><div class="disease-name">Cardiomegaly</div><div class="disease-track"><div class="disease-fill" style="width:14%;background:#FF375F;"></div></div><div style="font-size:10px;font-weight:600;min-width:20px;">12</div></div>
+            </div>
+          </div>
+          <div class="three-col">
+            <div class="card"><div class="card-title">Weekly Scans</div><div class="chart-bars" id="wchart"></div></div>
+            <div class="card"><div class="card-title">Quick Actions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;"><button class="btn btn-outline" style="flex-direction:column;padding:10px 8px;font-size:10px;" onclick="showPage('upload', document.querySelectorAll('.page-btn')[3])">Upload X-Ray</button><button class="btn btn-outline" style="flex-direction:column;padding:10px 8px;font-size:10px;" onclick="showPage('history', document.querySelectorAll('.page-btn')[5])">Patient Records</button><button class="btn btn-outline" style="flex-direction:column;padding:10px 8px;font-size:10px;" onclick="showPage('results', document.querySelectorAll('.page-btn')[4])">View Reports</button><button class="btn btn-outline" style="flex-direction:column;padding:10px 8px;font-size:10px;" onclick="showPage('admin', document.querySelectorAll('.page-btn')[6])">System Config</button></div></div>
+            <div class="card"><div class="card-title">System Status</div><div class="status-row"><span>AI Model Service</span><span class="badge badge-green">Online</span></div><div class="status-row"><span>Database</span><span class="badge badge-green">Online</span></div><div class="status-row"><span>Image Storage</span><span class="badge badge-green">Online</span></div><div class="status-row"><span>Model Version</span><span class="badge badge-blue">v3.2.1</span></div><div class="status-row"><span>Avg. Analysis</span><span style="font-size:11px;font-weight:600;color:#30D158;">2.8s</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ UPLOAD ════ -->
+  <div class="screen" id="screen-upload">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div><div class="logo-text">LungAI<span class="logo-sub">Detection System</span></div></div>
+        <div style="padding:8px 6px;flex:1;">
+          <div class="nav-section">Main</div>
+          <div class="nav-item" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>New Scan</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Patient History</div>
+        </div>
+        <div class="sidebar-footer"><div class="user-row"><div class="user-ava">SA</div><div><div class="user-nm">Dr. Sarah Ahmed</div><div class="user-rl">Radiologist</div></div></div></div>
+      </div>
+      <div class="main-area">
+        <div class="topbar"><div class="topbar-title">New Scan — Upload X-Ray</div><button class="btn btn-outline btn-sm" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])">← Dashboard</button></div>
+        <div class="page-body">
+          <div class="step-nav">
+            <div class="step-item"><div class="step-num done">✓</div><div class="step-info"><div class="step-title done">Patient Info</div></div><div class="step-line done"></div></div>
+            <div class="step-item"><div class="step-num active">2</div><div class="step-info"><div class="step-title active">Upload X-Ray</div></div><div class="step-line"></div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-info"><div class="step-title">AI Analysis</div></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div class="card" style="margin-bottom:12px;">
+                <div class="card-title">Upload Chest X-Ray</div>
+                <div style="border:2px dashed #C9CDD6;border-radius:10px;padding:28px 20px;text-align:center;background:#F7F8FA;cursor:pointer;" onclick="showPage('results', document.querySelectorAll('.page-btn')[4])">
+                  <div style="width:48px;height:48px;background:#E8F3FF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                  <div style="font-size:13px;font-weight:600;color:#0D1117;margin-bottom:4px;">Drop X-Ray image here</div>
+                  <div style="font-size:11px;color:#5A6072;">JPEG, PNG, DICOM supported · Max 20MB</div>
+                  <div style="margin-top:10px;font-size:11px;color:#0A84FF;">← Click to simulate upload & analysis</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">Select AI Models</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border:1px solid #E4E7EC;border-radius:8px;font-size:12px;"><input type="checkbox" checked style="accent-color:#0A84FF;" /><div><div style="font-weight:500;">DenseNet-121</div><div style="font-size:10px;color:#9BA3B5;">Multi-label CXR classifier</div></div></label>
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border:1px solid #E4E7EC;border-radius:8px;font-size:12px;"><input type="checkbox" checked style="accent-color:#0A84FF;" /><div><div style="font-weight:500;">ResNet-50</div><div style="font-size:10px;color:#9BA3B5;">General pathology detection</div></div></label>
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border:1px solid #E4E7EC;border-radius:8px;font-size:12px;"><input type="checkbox" checked style="accent-color:#0A84FF;" /><div><div style="font-weight:500;">VGG-16</div><div style="font-size:10px;color:#9BA3B5;">Texture-based analysis</div></div></label>
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border:1px solid #E4E7EC;border-radius:8px;font-size:12px;"><input type="checkbox" checked style="accent-color:#0A84FF;" /><div><div style="font-weight:500;">EfficientNet-B4</div><div style="font-size:10px;color:#9BA3B5;">High-accuracy ensemble</div></div></label>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">X-Ray Preview</div>
+              <div class="xray-box" style="margin-bottom:12px;">
+                <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M60 15 L60 105" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                  <path d="M60 25 C50 23 40 28 37 38 C34 47 38 60 50 63" fill="none" stroke="rgba(100,210,255,0.5)" stroke-width="1.5"/>
+                  <path d="M60 25 C70 23 80 28 83 38 C86 47 82 60 70 63" fill="none" stroke="rgba(100,210,255,0.5)" stroke-width="1.5"/>
+                  <path d="M60 38 C47 36 34 43 30 55 C26 67 31 82 45 85" fill="none" stroke="rgba(100,210,255,0.35)" stroke-width="1.5"/>
+                  <path d="M60 38 C73 36 86 43 90 55 C94 67 89 82 75 85" fill="none" stroke="rgba(100,210,255,0.35)" stroke-width="1.5"/>
+                </svg>
+                <div class="scan-line"></div>
+                <div class="heatmap-badge">Awaiting upload</div>
+              </div>
+              <div style="font-size:11px;color:#9BA3B5;text-align:center;margin-bottom:12px;">No image selected yet</div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="showPage('results', document.querySelectorAll('.page-btn')[4])">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/></svg>
+                Run AI Analysis →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ RESULTS ════ -->
+  <div class="screen" id="screen-results">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div><div class="logo-text">LungAI<span class="logo-sub">Detection System</span></div></div>
+        <div style="padding:8px 6px;flex:1;">
+          <div class="nav-item" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Results</div>
+          <div class="nav-item" onclick="showPage('history', document.querySelectorAll('.page-btn')[5])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Patient History</div>
+        </div>
+        <div class="sidebar-footer"><div class="user-row"><div class="user-ava">SA</div><div><div class="user-nm">Dr. Sarah Ahmed</div><div class="user-rl">Radiologist</div></div></div></div>
+      </div>
+      <div class="main-area">
+        <div class="topbar"><div class="topbar-title">AI Analysis Results — PT-2048</div><div style="display:flex;gap:6px;"><button class="btn btn-outline btn-sm">Print</button><button class="btn btn-primary btn-sm">Save to Records</button></div></div>
+        <div class="page-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div class="card" style="margin-bottom:12px;">
+                <div class="card-title">Analyzed X-Ray</div>
+                <div class="xray-box" style="margin-bottom:10px;">
+                  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60 15 L60 105" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                    <path d="M60 25 C50 23 40 28 37 38 C34 47 38 60 50 63" fill="none" stroke="rgba(100,210,255,0.5)" stroke-width="1.5"/>
+                    <path d="M60 25 C70 23 80 28 83 38 C86 47 82 60 70 63" fill="none" stroke="rgba(100,210,255,0.5)" stroke-width="1.5"/>
+                    <path d="M60 38 C47 36 34 43 30 55 C26 67 31 82 45 85" fill="none" stroke="rgba(100,210,255,0.35)" stroke-width="1.5"/>
+                    <path d="M60 38 C73 36 86 43 90 55 C94 67 89 82 75 85" fill="none" stroke="rgba(100,210,255,0.35)" stroke-width="1.5"/>
+                    <ellipse cx="42" cy="68" rx="10" ry="7" fill="rgba(255,100,80,0.3)" stroke="#FF453A" stroke-width="1" stroke-dasharray="3 1"/>
+                  </svg>
+                  <div class="heatmap-badge">GradCAM Heatmap</div>
+                </div>
+                <div style="font-size:10px;color:#9BA3B5;text-align:center;">Orange = highest model attention area</div>
+              </div>
+              <div class="card">
+                <div class="card-title">Patient Summary</div>
+                <table>
+                  <tr><td style="color:#9BA3B5;padding:5px 0;font-size:11px;">Name</td><td style="text-align:right;font-weight:500;font-size:11px;">John Mwangi</td></tr>
+                  <tr><td style="color:#9BA3B5;padding:5px 0;font-size:11px;">Patient ID</td><td style="text-align:right;font-weight:500;font-size:11px;">PT-2048</td></tr>
+                  <tr><td style="color:#9BA3B5;padding:5px 0;font-size:11px;">Age / Gender</td><td style="text-align:right;font-weight:500;font-size:11px;">45y / Male</td></tr>
+                  <tr><td style="color:#9BA3B5;padding:5px 0;font-size:11px;">Scan Date</td><td style="text-align:right;font-weight:500;font-size:11px;">Jan 19, 2025</td></tr>
+                  <tr><td style="color:#9BA3B5;padding:5px 0;font-size:11px;">Analysis Time</td><td style="text-align:right;font-weight:600;font-size:11px;color:#30D158;">2.8s</td></tr>
+                </table>
+              </div>
+            </div>
+            <div>
+              <div class="result-header" style="background:#FFF0EF;border:1px solid #FFCFCC;margin-bottom:12px;">
+                <div class="result-icon" style="background:#FF453A;"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div>
+                <div><div style="font-size:15px;font-weight:700;color:#C0392B;">Pneumonia Detected</div><div style="font-size:11px;color:#5A6072;">Confidence: 87.3% · Ensemble of 4 models</div></div>
+              </div>
+              <div class="card" style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div class="card-title" style="margin-bottom:0;">Disease Detection Results</div><span class="badge badge-blue">SCN-20250119</span></div>
+                <div class="conf-bar"><div style="font-size:11px;font-weight:600;width:110px;">Pneumonia</div><div class="conf-track"><div class="conf-fill conf-red" style="width:87%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">87.3%</div><span class="badge badge-red" style="margin-left:6px;font-size:10px;">Detected</span></div>
+                <div class="conf-bar"><div style="font-size:11px;width:110px;">Atelectasis</div><div class="conf-track"><div class="conf-fill conf-amber" style="width:31%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">31.0%</div></div>
+                <div class="conf-bar"><div style="font-size:11px;width:110px;">Pleural Effusion</div><div class="conf-track"><div class="conf-fill conf-amber" style="width:22%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">22.4%</div></div>
+                <div class="conf-bar"><div style="font-size:11px;width:110px;">Tuberculosis</div><div class="conf-track"><div class="conf-fill conf-green" style="width:18%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">18.5%</div></div>
+                <div class="conf-bar"><div style="font-size:11px;width:110px;">COVID-19</div><div class="conf-track"><div class="conf-fill conf-green" style="width:11%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">11.2%</div></div>
+                <div class="conf-bar"><div style="font-size:11px;width:110px;">Normal</div><div class="conf-track"><div class="conf-fill conf-green" style="width:13%;"></div></div><div style="font-size:11px;font-weight:600;min-width:36px;text-align:right;">12.7%</div></div>
+              </div>
+              <div class="card" style="margin-bottom:12px;">
+                <div class="card-title">Model Performance</div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:0.5px solid #F0F2F5;"><span>DenseNet-121</span><div style="display:flex;gap:8px;"><span style="color:#9BA3B5;">0.9s</span><strong>88.1%</strong></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:0.5px solid #F0F2F5;"><span>ResNet-50</span><div style="display:flex;gap:8px;"><span style="color:#9BA3B5;">0.7s</span><strong>85.7%</strong></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:0.5px solid #F0F2F5;"><span>VGG-16</span><div style="display:flex;gap:8px;"><span style="color:#9BA3B5;">0.8s</span><strong>86.2%</strong></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;"><span>EfficientNet-B4</span><div style="display:flex;gap:8px;"><span style="color:#9BA3B5;">1.1s</span><strong>89.2%</strong></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Clinical Recommendation</div>
+                <div style="background:#FFF8E0;border:1px solid #FFE566;border-radius:8px;padding:10px;font-size:11px;color:#8B6900;line-height:1.6;">High probability of bacterial pneumonia in right lower lobe. (1) Start empirical antibiotics. (2) Sputum culture. (3) CBC + CRP labs. (4) Monitor SpO2. (5) Follow-up X-ray in 4–6 weeks.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ HISTORY ════ -->
+  <div class="screen" id="screen-history">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div><div class="logo-text">LungAI<span class="logo-sub">Detection System</span></div></div>
+        <div style="padding:8px 6px;flex:1;">
+          <div class="nav-item" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+          <div class="nav-item" onclick="showPage('upload', document.querySelectorAll('.page-btn')[3])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>New Scan</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Patient History</div>
+        </div>
+        <div class="sidebar-footer"><div class="user-row"><div class="user-ava">SA</div><div><div class="user-nm">Dr. Sarah Ahmed</div><div class="user-rl">Radiologist</div></div></div></div>
+      </div>
+      <div class="main-area">
+        <div class="topbar"><div class="topbar-title">Patient History</div><button class="btn btn-primary btn-sm" onclick="showPage('upload', document.querySelectorAll('.page-btn')[3])">+ New Scan</button></div>
+        <div class="page-body">
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <div class="search-bar" style="flex:1;min-width:180px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input placeholder="Search patient, ID, diagnosis..." /></div>
+            <select class="form-sel" style="width:130px;margin-bottom:0;"><option>All Status</option><option>Positive</option><option>Normal</option></select>
+            <select class="form-sel" style="width:130px;margin-bottom:0;"><option>All Diseases</option><option>Pneumonia</option><option>TB</option></select>
+            <button class="btn btn-outline btn-sm">Export CSV</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div><div class="card-title" style="margin-bottom:2px;">All Patient Scans</div><div style="font-size:10px;color:#9BA3B5;">12 total records</div></div>
+              <div style="display:flex;gap:3px;background:#F7F8FA;padding:3px;border-radius:6px;">
+                <button class="tab-btn-inner active" style="padding:4px 10px;font-size:11px;">All</button>
+                <button class="tab-btn-inner" style="padding:4px 10px;font-size:11px;">Today</button>
+                <button class="tab-btn-inner" style="padding:4px 10px;font-size:11px;">This Week</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead><tr><th>Patient</th><th>ID</th><th>Age/Gender</th><th>Diagnosis</th><th>Confidence</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="patient-ava">JM</div><div><div style="font-weight:500;">John Mwangi</div><div style="font-size:10px;color:#9BA3B5;">Cough, fever 5 days</div></div></div></td><td style="font-family:monospace;font-size:10px;">PT-2048</td><td>45 / M</td><td><strong>Pneumonia</strong></td><td><div style="display:flex;align-items:center;gap:5px;"><div style="width:50px;height:4px;background:#E4E7EC;border-radius:100px;overflow:hidden;"><div style="width:87%;height:100%;background:#FF453A;border-radius:100px;"></div></div><span style="font-size:10px;font-weight:600;">87%</span></div></td><td><span class="badge badge-red">Finding</span></td><td style="font-size:10px;color:#5A6072;">Jan 19</td><td><button class="btn btn-outline btn-sm" onclick="showPage('results', document.querySelectorAll('.page-btn')[4])">View</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="patient-ava" style="background:#E9FAF0;color:#1A7A3C;">AH</div><div><div style="font-weight:500;">Amina Hassan</div><div style="font-size:10px;color:#9BA3B5;">Routine check</div></div></div></td><td style="font-family:monospace;font-size:10px;">PT-2047</td><td>32 / F</td><td><strong>Normal</strong></td><td><div style="display:flex;align-items:center;gap:5px;"><div style="width:50px;height:4px;background:#E4E7EC;border-radius:100px;overflow:hidden;"><div style="width:96%;height:100%;background:#30D158;border-radius:100px;"></div></div><span style="font-size:10px;font-weight:600;">96%</span></div></td><td><span class="badge badge-green">Normal</span></td><td style="font-size:10px;color:#5A6072;">Jan 19</td><td><button class="btn btn-outline btn-sm">View</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="patient-ava">DO</div><div><div style="font-weight:500;">David Ochieng</div><div style="font-size:10px;color:#9BA3B5;">Night sweats</div></div></div></td><td style="font-family:monospace;font-size:10px;">PT-2046</td><td>67 / M</td><td><strong>Tuberculosis</strong></td><td><div style="display:flex;align-items:center;gap:5px;"><div style="width:50px;height:4px;background:#E4E7EC;border-radius:100px;overflow:hidden;"><div style="width:74%;height:100%;background:#FF9F0A;border-radius:100px;"></div></div><span style="font-size:10px;font-weight:600;">74%</span></div></td><td><span class="badge badge-red">Finding</span></td><td style="font-size:10px;color:#5A6072;">Jan 19</td><td><button class="btn btn-outline btn-sm">View</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="patient-ava" style="background:#E9FAF0;color:#1A7A3C;">SK</div><div><div style="font-weight:500;">Samuel Kipchoge</div><div style="font-size:10px;color:#9BA3B5;">Pre-employment</div></div></div></td><td style="font-family:monospace;font-size:10px;">PT-2044</td><td>28 / M</td><td><strong>Normal</strong></td><td><div style="display:flex;align-items:center;gap:5px;"><div style="width:50px;height:4px;background:#E4E7EC;border-radius:100px;overflow:hidden;"><div style="width:94%;height:100%;background:#30D158;border-radius:100px;"></div></div><span style="font-size:10px;font-weight:600;">94%</span></div></td><td><span class="badge badge-green">Normal</span></td><td style="font-size:10px;color:#5A6072;">Jan 18</td><td><button class="btn btn-outline btn-sm">View</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="patient-ava">FA</div><div><div style="font-weight:500;">Fatuma Ali</div><div style="font-size:10px;color:#9BA3B5;">Ground-glass opacity</div></div></div></td><td style="font-family:monospace;font-size:10px;">PT-2043</td><td>41 / F</td><td><strong>COVID-19</strong></td><td><div style="display:flex;align-items:center;gap:5px;"><div style="width:50px;height:4px;background:#E4E7EC;border-radius:100px;overflow:hidden;"><div style="width:79%;height:100%;background:#FF9F0A;border-radius:100px;"></div></div><span style="font-size:10px;font-weight:600;">79%</span></div></td><td><span class="badge badge-red">Finding</span></td><td style="font-size:10px;color:#5A6072;">Jan 17</td><td><button class="btn btn-outline btn-sm">View</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:11px;color:#9BA3B5;">
+              <span>Showing 1–5 of 12 records</span>
+              <div style="display:flex;gap:5px;"><button class="btn btn-outline btn-sm" disabled>← Prev</button><button class="btn btn-outline btn-sm">Next →</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ ADMIN ════ -->
+  <div class="screen" id="screen-admin">
+    <div class="app-layout">
+      <div class="sidebar">
+        <div class="sidebar-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2C8.5 2 5.5 4 4 7c-1.5 3-1 6.5 1 9 1 1.3 2.3 2.5 3.5 3.5l.5.4c.5.4 1 .6 1.5.6.6 0 1.1-.3 1.5-.7L13 18c1.2-1 2.5-2.2 3.5-3.5 2-2.5 2.5-6 1-9C16 3 14 2 12 2z"/></svg></div><div class="logo-text">LungAI<span class="logo-sub">Detection System</span></div></div>
+        <div style="padding:8px 6px;flex:1;">
+          <div class="nav-item" onclick="showPage('dashboard', document.querySelectorAll('.page-btn')[2])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Admin Panel</div>
+        </div>
+        <div class="sidebar-footer"><div class="user-row"><div class="user-ava">AD</div><div><div class="user-nm">System Admin</div><div class="user-rl">Administrator</div></div></div></div>
+      </div>
+      <div class="main-area">
+        <div class="topbar"><div class="topbar-title">Admin Panel</div><span class="badge badge-red">Admin Access</span></div>
+        <div class="page-body">
+          <div class="stats-grid" style="margin-bottom:14px;">
+            <div class="stat-card"><div class="stat-icon si-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="stat-label">Total Users</div><div class="stat-value">24</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="stat-label">Total Scans</div><div class="stat-value">1,083</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div><div class="stat-label">Avg. Response</div><div class="stat-value">2.8s</div></div></div>
+            <div class="stat-card"><div class="stat-icon si-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div><div class="stat-label">Accuracy</div><div class="stat-value">95.4%</div></div></div>
+          </div>
+          <div class="tab-nav-inner">
+            <button class="tab-btn-inner active" id="at1" onclick="adminTab('users')">User Management</button>
+            <button class="tab-btn-inner" id="at2" onclick="adminTab('models')">AI Models</button>
+            <button class="tab-btn-inner" id="at3" onclick="adminTab('settings')">System Settings</button>
+            <button class="tab-btn-inner" id="at4" onclick="adminTab('logs')">Audit Logs</button>
+          </div>
+          <div id="admin-panel-users" class="card">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px;"><div class="card-title" style="margin-bottom:0;">Registered Users</div><button class="btn btn-primary btn-sm">+ Add User</button></div>
+            <div style="display:flex;flex-direction:column;gap:0;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F0F2F5;"><div class="user-ava">SA</div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Dr. Sarah Ahmed</div><div style="font-size:10px;color:#9BA3B5;">sarah@lungai.com · 342 scans</div></div><span class="badge badge-red">admin</span><span class="badge badge-green" style="margin-left:4px;">active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Disable</button></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F0F2F5;"><div class="user-ava" style="background:#E9FAF0;color:#1A7A3C;">JO</div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Dr. James Ochieng</div><div style="font-size:10px;color:#9BA3B5;">james@lungai.com · 187 scans</div></div><span class="badge badge-blue">radiologist</span><span class="badge badge-green" style="margin-left:4px;">active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Disable</button></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #F0F2F5;"><div class="user-ava" style="background:#FFF8E0;color:#9A7200;">MW</div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Nurse Mary Wanjiku</div><div style="font-size:10px;color:#9BA3B5;">mary@lungai.com · 94 scans</div></div><span class="badge badge-amber">nurse</span><span class="badge badge-green" style="margin-left:4px;">active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Disable</button></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 0;"><div class="user-ava">AH</div><div style="flex:1;"><div style="font-weight:500;font-size:12px;">Dr. Ali Hassan</div><div style="font-size:10px;color:#9BA3B5;">ali@lungai.com · 256 scans</div></div><span class="badge badge-green">doctor</span><span class="badge badge-green" style="margin-left:4px;">active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Disable</button></div>
+            </div>
+          </div>
+          <div id="admin-panel-models" class="card" style="display:none;">
+            <div class="card-title">AI Model Status</div>
+            <div class="model-bar"><div style="width:120px;"><div style="font-size:12px;font-weight:600;">DenseNet-121</div><div style="font-size:10px;color:#9BA3B5;">v2.1 · 14 labels</div></div><div style="flex:1;background:#E4E7EC;border-radius:100px;height:6px;overflow:hidden;"><div style="width:93%;height:100%;background:#30D158;border-radius:100px;"></div></div><span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;">93.2%</span><span class="badge badge-green" style="margin-left:8px;">Active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Update</button></div>
+            <div class="model-bar"><div style="width:120px;"><div style="font-size:12px;font-weight:600;">ResNet-50</div><div style="font-size:10px;color:#9BA3B5;">v1.9 · 8 labels</div></div><div style="flex:1;background:#E4E7EC;border-radius:100px;height:6px;overflow:hidden;"><div style="width:91%;height:100%;background:#30D158;border-radius:100px;"></div></div><span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;">91.8%</span><span class="badge badge-green" style="margin-left:8px;">Active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Update</button></div>
+            <div class="model-bar"><div style="width:120px;"><div style="font-size:12px;font-weight:600;">VGG-16</div><div style="font-size:10px;color:#9BA3B5;">v1.6 · 8 labels</div></div><div style="flex:1;background:#E4E7EC;border-radius:100px;height:6px;overflow:hidden;"><div style="width:89%;height:100%;background:#0A84FF;border-radius:100px;"></div></div><span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;">89.4%</span><span class="badge badge-green" style="margin-left:8px;">Active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Update</button></div>
+            <div class="model-bar"><div style="width:120px;"><div style="font-size:12px;font-weight:600;">EfficientNet-B4</div><div style="font-size:10px;color:#9BA3B5;">v3.0 · 14 labels</div></div><div style="flex:1;background:#E4E7EC;border-radius:100px;height:6px;overflow:hidden;"><div style="width:95%;height:100%;background:#30D158;border-radius:100px;"></div></div><span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;">95.4%</span><span class="badge badge-green" style="margin-left:8px;">Active</span><button class="btn btn-outline btn-sm" style="margin-left:8px;">Update</button></div>
+          </div>
+          <div id="admin-panel-settings" class="card" style="display:none;">
+            <div class="card-title">System Configuration</div>
+            <div class="setting-row"><div><div class="setting-lbl">Ensemble Mode</div><div class="setting-desc">Combine outputs of all selected models</div></div><label class="toggle-wrap"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><div class="setting-lbl">GradCAM Heatmaps</div><div class="setting-desc">Generate attention visualizations</div></div><label class="toggle-wrap"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><div class="setting-lbl">Auto-flag Critical Findings</div><div class="setting-desc">Alert for cancer/TB detections</div></div><label class="toggle-wrap"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><div class="setting-lbl">Image Enhancement (CLAHE)</div><div class="setting-desc">Preprocessing before analysis</div></div><label class="toggle-wrap"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><div class="setting-lbl">Minimum Confidence Threshold</div><div class="setting-desc">Scans below this are flagged</div></div><div style="display:flex;align-items:center;gap:8px;"><input type="range" min="50" max="95" value="70" style="width:70px;" oninput="this.nextElementSibling.textContent=this.value+'%'"/><span style="font-size:11px;font-weight:600;">70%</span></div></div>
+          </div>
+          <div id="admin-panel-logs" class="card" style="display:none;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px;"><div class="card-title" style="margin-bottom:0;">Audit Log</div><button class="btn btn-outline btn-sm">Export</button></div>
+            <div style="font-size:11px;">
+              <div style="padding:8px 0;border-bottom:0.5px solid #F0F2F5;"><div style="display:flex;justify-content:space-between;"><span><strong>Dr. Sarah Ahmed</strong> — Login</span><span style="color:#9BA3B5;font-family:monospace;font-size:10px;">2025-01-19 09:14</span></div><div style="color:#9BA3B5;font-size:10px;">IP: 192.168.1.10</div></div>
+              <div style="padding:8px 0;border-bottom:0.5px solid #F0F2F5;"><div style="display:flex;justify-content:space-between;"><span><strong>Dr. James Ochieng</strong> — Scan PT-2048 uploaded</span><span style="color:#9BA3B5;font-family:monospace;font-size:10px;">2025-01-19 09:08</span></div><div style="color:#9BA3B5;font-size:10px;">IP: 192.168.1.11</div></div>
+              <div style="padding:8px 0;border-bottom:0.5px solid #F0F2F5;"><div style="display:flex;justify-content:space-between;"><span><strong>System</strong> — EfficientNet-B4 model updated to v3.0</span><span style="color:#9BA3B5;font-family:monospace;font-size:10px;">2025-01-19 07:00</span></div><div style="color:#9BA3B5;font-size:10px;">IP: localhost</div></div>
+              <div style="padding:8px 0;"><div style="display:flex;justify-content:space-between;"><span><strong>Admin</strong> — User Mary Wanjiku created</span><span style="color:#9BA3B5;font-family:monospace;font-size:10px;">2025-01-18 16:20</span></div><div style="color:#9BA3B5;font-size:10px;">IP: 192.168.1.10</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(name, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  function adminTab(tab) {
+    ['users','models','settings','logs'].forEach((t, i) => {
+      document.getElementById('admin-panel-' + t).style.display = t === tab ? 'block' : 'none';
+      document.getElementById('at' + (i+1)).classList.toggle('active', t === tab);
+    });
+  }
+
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const vals = [42,68,55,87,73,31,48];
+  const max = Math.max(...vals);
+  const wc = document.getElementById('wchart');
+  if (wc) {
+    wc.innerHTML = days.map((d,i) => `<div class="chart-col"><div style="font-size:10px;color:#5A6072;">${vals[i]}</div><div class="chart-bar" style="height:${Math.round((vals[i]/max)*60)}px;${i===3?'opacity:1;':''}"></div><div class="chart-lbl">${d}</div></div>`).join('');
+  }
+</script>
